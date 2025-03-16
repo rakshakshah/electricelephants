@@ -15,7 +15,7 @@ class Movie(BaseModel):
 
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app, origins="https://rakshakshah.github.io")  # Enable CORS for all routes
 
 @app.route('/run-python', methods=['POST'])
 def run_python():

@@ -1,3 +1,5 @@
 Flask
 gunicorn
 flask-cors
+ollama
+pydantic

@@ -36,8 +36,8 @@ def run_python():
         format=Movie.model_json_schema(),
         )
 
-    Movie = Movie.model_validate_json(response.message.content)
-    return jsonify({"message": Movie + user_text})
+    movie_instance = Movie.model_validate_json(response.message.content)
+    return jsonify({"message": movie_instance + user_text})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)

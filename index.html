@@ -225,7 +225,7 @@
 
     <script>
         function runPython() {
-            fetch('https://electricelephants.onrender.com')  // Use your Render URL
+            fetch('https://electricelephants.onrender.com/run-python')  // Use your Render URL
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById("output").innerText = data.message;

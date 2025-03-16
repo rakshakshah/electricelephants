@@ -1,8 +1,8 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from ollama import chat
+import ollama
 from pydantic import BaseModel
-
 
 
 class Movie(BaseModel):
@@ -40,4 +40,4 @@ def run_python():
     return jsonify({"message": movie_instance + user_text})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5001)

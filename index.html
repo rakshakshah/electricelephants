@@ -222,18 +222,27 @@
 
 
     <!-- BACKEND!!! DO NOT CHANGE -->
-    <button onclick="runPython()">Run Python Code</button>
-    <p id="output"></p>
-
+    <h1>Enter Your Text</h1>
+    <input type="text" id="userInput" placeholder="Enter some text">
+    <button onclick="runPython()">Submit</button>
+    <p id="output">Waiting for response...</p>
+  
     <script>
-        function runPython() {
-            fetch('https://electricelephants.onrender.com/run-python')  // Use your Render URL
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById("output").innerText = data.message;
-                })
-                .catch(error => console.error("Error:", error));
-        }
+      function runPython() {
+        const inputText = document.getElementById("userInput").value;
+        fetch('https://electricelephants.onrender.com/run-python', {  // Replace with your Render URL if different
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ text: inputText })
+        })
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById("output").innerText = data.message;
+        })
+        .catch(error => console.error("Error:", error));
+      }
     </script>
     <!-- BACKEND!!! DO NOT CHANGE -->
   </div>

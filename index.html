@@ -230,7 +230,7 @@
     <script>
       function runPython() {
         const inputText = document.getElementById("userInput").value;
-        fetch('https://electricelephants.onrender.com/run-python', {  // Replace with your Render URL if different
+        fetch('http://127.0.0.1:5000/run-python', {  // Replace with your Render URL if different
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'

@@ -19,7 +19,6 @@ CORS(app, origins="https://rakshakshah.github.io")  # Enable CORS for all routes
 
 @app.route('/run-python', methods=['POST'])
 def run_python():
-    print(ollama.list())
     data = request.get_json()  # Get JSON data from the request
     user_text = data.get('text', '')  # Extract the 'text' field
     response = chat(

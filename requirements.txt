@@ -3,3 +3,5 @@ gunicorn
 flask-cors
 ollama
 pydantic
+requests
+dotenv

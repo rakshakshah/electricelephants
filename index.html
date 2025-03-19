@@ -66,52 +66,71 @@
 
     <!-- BACKEND!!! DO NOT CHANGE -->
     <h3>~ Welcome Back! ~</h3>
-    <input type="text" id="userInput" placeholder="Enter some text">
-    <button onclick="runPython()">Submit</button>
-    
-    <p id="output">Waiting for response...</p>
-    <div id="songsOutput"></div> <!-- Songs will be displayed here -->
-    
-    <script>
-      function runPython() {
-        const inputText = document.getElementById("userInput").value;
-        
-        fetch('http://localhost:5001/run-python', {  // Use your Render URL if needed
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ text: inputText })
-        })
-        .then(response => response.json())
-        .then(data => {
-          // Display movie details
-          document.getElementById("output").innerText = data.message;
-    
-          // Clear previous song results
-          const outputDiv = document.getElementById("songsOutput");
-          outputDiv.innerHTML = "";
-    
-          // Function to display songs
-          function displaySongs(title, songs) {
-            if (songs && songs.length > 0) {
-              let section = `<h3>${title}</h3><ul>`;
-              songs.forEach(song => {
-                section += `<li><strong>${song.song_title}</strong> - ${song.artist}</li>`;
-              });
-              section += `</ul>`;
-              outputDiv.innerHTML += section;
+<input type="text" id="userInput" placeholder="Enter some text">
+<button onclick="runPython()">Submit</button>
+
+<p id="output">Waiting for response...</p>
+<div id="songsOutput"></div> <!-- Songs will be displayed here -->
+
+<script>
+  function runPython() {
+    const inputText = document.getElementById("userInput").value;
+
+    fetch('http://localhost:5001/run-python', {  // Use your Render URL if needed
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ text: inputText })
+    })
+    .then(response => response.json())
+    .then(data => {
+      // Display movie details
+      document.getElementById("output").innerText = data.message;
+
+      // Clear previous song results
+      const outputDiv = document.getElementById("songsOutput");
+      outputDiv.innerHTML = "";
+
+      // Function to display songs (handles all data types)
+      function displaySongs(title, songs) {
+        if (songs && songs.length > 0) {
+          let section = `<h3>${title}</h3><ul>`;
+          songs.forEach(song => {
+            // If the song is an object (dictionary)
+            if (typeof song === 'object') {
+              // Check for properties song_title and artist, otherwise display the entire object as string
+              const songTitle = song.song_title ? song.song_title : "Unknown Title";
+              const artist = song.artist ? song.artist : "Unknown Artist";
+              section += `<li><strong>${songTitle}</strong> - ${artist}</li>`;
+            } 
+            // If the song is a string (e.g., just the song name or artist)
+            else if (typeof song === 'string') {
+              section += `<li>${song}</li>`;
+            } 
+            // If the song is an array (e.g., list of song-related data)
+            else if (Array.isArray(song)) {
+              section += `<li>${song.join(", ")}</li>`;
+            } 
+            // Default: show the song as a JSON string (for any other data type)
+            else {
+              section += `<li>${JSON.stringify(song)}</li>`;
             }
-          }
-    
-          // Display different categories of songs
-          displaySongs("Songs by Lyrics", data.songs_by_lyrics);
-          displaySongs("Songs by Sentiment", data.songs_by_sentiment);
-          displaySongs("Generated Songs", data.songs_generated);
-        })
-        .catch(error => console.error("Error:", error));
+          });
+          section += `</ul>`;
+          outputDiv.innerHTML += section;
+        }
       }
-    </script>
+
+      // Display different categories of songs
+      displaySongs("Songs by Lyrics", data.songs_by_lyrics);
+      displaySongs("Songs by Sentiment", data.songs_by_sentiment);
+      displaySongs("Generated Songs", data.songs_generated);
+    })
+    .catch(error => console.error("Error:", error));
+  }
+</script>
+
     
     <!-- BACKEND!!! DO NOT CHANGE -->
     </div>

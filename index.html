@@ -73,7 +73,7 @@
     <script>
       function runPython() {
         const inputText = document.getElementById("userInput").value;
-        fetch('https://electricelephants.onrender.com/run-python', {  // Replace with your Render URL if different
+        fetch('http://localhost:5001/run-python', {  // Replace with your Render URL if different
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'

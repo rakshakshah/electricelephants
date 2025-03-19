@@ -107,7 +107,11 @@
         if (songs && songs.length > 0) {
           let section = `<h3>${title}</h3><ul>`;
           songs.forEach(song => {
-            section += `<li>${song.song_title}</li>`;  // Only display song title
+            if (typeof song === 'object') {
+              section += `<li>${JSON.stringify(song)}</li>`; // Display full object as string
+            } else {
+              section += `<li>${song}</li>`; // Display string/array normally
+            }
           });
           section += `</ul>`;
           outputDiv.innerHTML += section;

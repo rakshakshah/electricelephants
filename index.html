@@ -68,12 +68,15 @@
     <h3>~ Welcome Back! ~</h3>
     <input type="text" id="userInput" placeholder="Enter some text">
     <button onclick="runPython()">Submit</button>
+    
     <p id="output">Waiting for response...</p>
-  
+    <div id="songsOutput"></div> <!-- Songs will be displayed here -->
+    
     <script>
       function runPython() {
         const inputText = document.getElementById("userInput").value;
-        fetch('http://localhost:5001/run-python', {  // Replace with your Render URL if different
+        
+        fetch('http://localhost:5001/run-python', {  // Use your Render URL if needed
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -82,11 +85,34 @@
         })
         .then(response => response.json())
         .then(data => {
+          // Display movie details
           document.getElementById("output").innerText = data.message;
+    
+          // Clear previous song results
+          const outputDiv = document.getElementById("songsOutput");
+          outputDiv.innerHTML = "";
+    
+          // Function to display songs
+          function displaySongs(title, songs) {
+            if (songs && songs.length > 0) {
+              let section = `<h3>${title}</h3><ul>`;
+              songs.forEach(song => {
+                section += `<li><strong>${song.song_title}</strong> - ${song.artist}</li>`;
+              });
+              section += `</ul>`;
+              outputDiv.innerHTML += section;
+            }
+          }
+    
+          // Display different categories of songs
+          displaySongs("Songs by Lyrics", data.songs_by_lyrics);
+          displaySongs("Songs by Sentiment", data.songs_by_sentiment);
+          displaySongs("Generated Songs", data.songs_generated);
         })
         .catch(error => console.error("Error:", error));
       }
     </script>
+    
     <!-- BACKEND!!! DO NOT CHANGE -->
     </div>
 

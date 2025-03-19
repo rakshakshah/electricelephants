@@ -237,7 +237,7 @@ def run_python():
     load_dotenv()
     TMDB_API_KEY = os.getenv("TMDB_API_KEY")
     TMDB_BASE_URL = "https://api.themoviedb.org/3"
-    movie_details = find_movie_using_llm(movie_instance.movie_title, TMDB_BASE_URL, TMDB_API_KEY,model_name="deepseek-r1:7b",)
+    movie_details = find_movie_using_llm("Cars", TMDB_BASE_URL, TMDB_API_KEY,model_name="deepseek-r1:7b",)
 
     ################ 
 
@@ -329,8 +329,13 @@ def run_python():
     model='llama3.2:latest',
     format=sentimentOfSongs.model_json_schema(),
     )
-        
-    songsByLyrics = sentimentOfSongs.songs_generated_by_input.model_validate_json(response.message.content)
+    songs_data = json.loads(response.message.content)
+
+    # Access songs_generated_by_input manually
+    songsByLyrics = songs_data.get("songs_generated_by_input", [])
+
+    # Debugging
+    print(songsByLyrics)
 
     #GENERATE SONGS BY FEELING/SENTIMENT
     prompt = f"""
@@ -360,8 +365,13 @@ def run_python():
     format=sentimentOfSongs.model_json_schema(),
     )
         
-    songsBySentiment = sentimentOfSongs.songs_generated_by_input.model_validate_json(response.message.content)
+    songs_data = json.loads(response.message.content)
 
+    # Access songs_generated_by_input manually
+    songsBySentiment = songs_data.get("songs_generated_by_input", [])
+
+    # Debugging
+    print(songsBySentiment)
 
     #GENERATE SONGS W/OUT EXTRA INSTRUCTION
     prompt = f"""
@@ -389,8 +399,13 @@ def run_python():
     model='llama3.2:latest',
     format=sentimentOfSongs.model_json_schema(),
     )
-        
-    songsGenerated = sentimentOfSongs.songs_generated_by_input.model_validate_json(response.message.content)
+    songs_data = json.loads(response.message.content)
+
+    # Access songs_generated_by_input manually
+    songsGenerated = songs_data.get("songs_generated_by_input", [])
+
+    # Debugging
+    print(songsGenerated)   
 
     ################
 

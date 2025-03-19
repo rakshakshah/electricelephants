@@ -66,20 +66,20 @@
 
     <!-- BACKEND!!! DO NOT CHANGE -->
     <h3 style="text-align: center;">~ Welcome Back Shreya! ~</h3>
-      <!-- Chat-Like Input Section -->
-      <div style="width: 90%; margin: 20px auto; padding: 20px; background: #FEFAFE; border-radius: 20px; text-align: center;">
-        <h2 style="font-size: 1.8rem; font-weight: bold; margin-bottom: 15px;">Chat with Ellie</h2>
-        <div style="display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px; border-radius: 30px; background: #fff; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); max-width: 600px; margin: auto;">
-            <!-- Chat Input Field -->
-            <input type="text" id="userInput" placeholder="Type a message..."
-                style="flex: 1; padding: 12px 15px; border: none; border-radius: 25px; outline: none; font-size: 16px; background: #F7F7F7; box-shadow: inset 0px 2px 4px rgba(0, 0, 0, 0.1);">
-            <!-- Submit Button -->
-            <button onclick="runPython()" style="padding: 12px 18px; border-radius: 50px; border: none; background: #FF69B4; color: white; font-size: 16px; cursor: pointer; box-shadow: 0px 4px 10px rgba(255, 105, 180, 0.4); transition: 0.3s;">
-              ⌯⌲
-            </button>
-        </div>
-        <p id="output" style="margin-top: 10px; font-size: 14px; color: #777;">Waiting for response...</p>
-      </div>
+<!-- Chat-Like Input Section -->
+<div style="width: 90%; margin: 20px auto; padding: 20px; background: #FEFAFE; border-radius: 20px; text-align: center;">
+  <h2 style="font-size: 1.8rem; font-weight: bold; margin-bottom: 15px;">Chat with Ellie</h2>
+  <div style="display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px; border-radius: 30px; background: #fff; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); max-width: 600px; margin: auto;">
+      <!-- Chat Input Field -->
+      <input type="text" id="userInput" placeholder="Type a message..."
+          style="flex: 1; padding: 12px 15px; border: none; border-radius: 25px; outline: none; font-size: 16px; background: #F7F7F7; box-shadow: inset 0px 2px 4px rgba(0, 0, 0, 0.1);">
+      <!-- Submit Button -->
+      <button onclick="runPython()" style="padding: 12px 18px; border-radius: 50px; border: none; background: #FF69B4; color: white; font-size: 16px; cursor: pointer; box-shadow: 0px 4px 10px rgba(255, 105, 180, 0.4); transition: 0.3s;">
+        ⌯⌲
+      </button>
+  </div>
+  <p id="output" style="margin-top: 10px; font-size: 14px; color: #777;">Waiting for response...</p>
+</div>
 <div id="songsOutput"></div> <!-- Songs will be displayed here -->
 
 <script>
@@ -95,51 +95,44 @@
     })
     .then(response => response.json())
     .then(data => {
-      // Display movie details
-      document.getElementById("output").innerText = data.message;
+      // Display movie details (message)
+      document.getElementById("output").innerText = data.message || "No movie details available.";
 
-      // Clear previous song results
+      // Clear previous results
       const outputDiv = document.getElementById("songsOutput");
       outputDiv.innerHTML = "";
 
-      // Function to display songs (handles all data types)
-      function displaySongs(title, songs) {
-        if (songs && songs.length > 0) {
-          let section = `<h3>${title}</h3><ul>`;
-          songs.forEach(song => {
-            // If the song is an object (dictionary)
-            if (typeof song === 'object') {
-              // Check for properties song_title and artist, otherwise display the entire object as string
-              const songTitle = song.song_title ? song.song_title : "Unknown Title";
-              const artist = song.artist ? song.artist : "Unknown Artist";
-              section += `<li><strong>${songTitle}</strong> - ${artist}</li>`;
-            } 
-            // If the song is a string (e.g., just the song name or artist)
-            else if (typeof song === 'string') {
-              section += `<li>${song}</li>`;
-            } 
-            // If the song is an array (e.g., list of song-related data)
-            else if (Array.isArray(song)) {
-              section += `<li>${song.join(", ")}</li>`;
-            } 
-            // Default: show the song as a JSON string (for any other data type)
-            else {
-              section += `<li>${JSON.stringify(song)}</li>`;
-            }
-          });
-          section += `</ul>`;
-          outputDiv.innerHTML += section;
-        }
+      // Function to display each category of songs
+      function displayCategory(title, items) {
+        if (!items || items.length === 0) return; // Skip empty categories
+
+        let section = `<h3>${title}</h3><ul>`;
+        items.forEach(item => {
+          // If it's an object with song_title, display it properly
+          if (typeof item === 'object' && item.song_title) {
+            section += `<li><strong>${item.song_title}</strong> ${item.artist ? "- " + item.artist : ""}</li>`;
+          }
+          // If it's a plain string or other data type, just display it
+          else {
+            section += `<li>${JSON.stringify(item)}</li>`;
+          }
+        });
+        section += `</ul>`;
+        outputDiv.innerHTML += section;
       }
 
-      // Display different categories of songs
-      displaySongs("Songs by Lyrics", data.songs_by_lyrics);
-      displaySongs("Songs by Sentiment", data.songs_by_sentiment);
-      displaySongs("Generated Songs", data.songs_generated);
+      // Display all categories
+      displayCategory("Songs by Lyrics", data.songs_by_lyrics);
+      displayCategory("Songs by Sentiment", data.songs_by_sentiment);
+      displayCategory("Generated Songs", data.songs_generated);
     })
-    .catch(error => console.error("Error:", error));
+    .catch(error => {
+      console.error("Error:", error);
+      document.getElementById("output").innerText = "Error fetching response.";
+    });
   }
 </script>
+
 
     
     <!-- BACKEND!!! DO NOT CHANGE -->

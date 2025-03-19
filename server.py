@@ -18,6 +18,9 @@ class Movie(BaseModel):
     movie_sentiments: list[str]
     movie_description_words: list[str]
 
+class sentimentOfSongs(BaseModel):
+    songs_generated_by_input: list[str]
+
 
 def search_movies_by_title(title, TMDB_BASE_URL, TMDB_API_KEY, page=1):
     """
@@ -205,6 +208,9 @@ def find_movie_using_llm(user_input, TMDB_BASE_URL, TMDB_API_KEY,model_name="dee
 
 @app.route('/run-python', methods=['POST'])
 def run_python():
+    
+
+    ################MOD 1
     data = request.get_json()  # Get JSON data from the request
     user_text = data.get('text', '')  # Extract the 'text' field
     response = chat(
@@ -224,15 +230,185 @@ def run_python():
 
     movie_instance = Movie.model_validate_json(response.message.content)
     print(movie_instance.movie_title)
+    ################
 
-    # model 2
+    ################ MOD 2
     ollama.pull("deepseek-r1:7b")
     load_dotenv()
     TMDB_API_KEY = os.getenv("TMDB_API_KEY")
     TMDB_BASE_URL = "https://api.themoviedb.org/3"
     movie_details = find_movie_using_llm(movie_instance.movie_title, TMDB_BASE_URL, TMDB_API_KEY,model_name="deepseek-r1:7b",)
 
-    return jsonify({"message": movie_details})
+    ################ 
+
+    ################ MOD 3
+    #empty for now, just using values for demo
+
+    sentiment_word_pairs = [
+    ["Uplifting", "Depressing"],
+    ["Triumphant", "Defeated"],
+    ["Thrilling", "Boring"],
+    ["Inspiring", "Discouraging"],
+    ["Comforting", "Disturbing"],
+    ["Amusing", "Somber"],
+    ["Profound", "Shallow"],
+    ["Intimate", "Distant"],
+    ["Redemptive", "Condemning"],
+    ["Serene", "Chaotic"],
+    ["Harmonious", "Discordant"],
+    ["Nostalgic", "New"],
+    ["Memorable", "Forgettable"],
+    ["Popular", "Niche"],
+    ["Spirited", "Lifeless"],
+    ["Provocative", "Innocuous"],
+    ["Jubilant", "Despondent"],
+    ["Surreal", "Realistic"],
+    ["Immerseive", "Detached"],
+    ["Fantastical", "Grounded"],
+    ["Complex", "Simple"],
+    ["Innovative", "Common"],
+    ["Raw", "Polished"],
+    ["Ambitious", "Unimaginative"],
+    ["Liberating", "Confining"],
+    ["Childish", "Mature"]
+    ]
+
+    #closer to -1 for first word, closer to 1 for second word
+    sentiment_word_pairs_values = [
+    0.8721, 0.8234, 0.7482, 0.8412, 0.9123, 0.7654, 0.6321, 0.8123, 
+    0.8567, 0.7245, 0.7934, 0.9021, 0.8945, 0.9278, 0.8932, -0.7345, 
+    0.8456, 0.7987, 0.8712, 0.8129, -0.6523, 0.7268, -0.5124, 0.7845, 
+    0.8492, -0.3127
+    ]
+    
+    related_words = [
+    "Whimsical",
+    "Nostalgic",
+    "Heartfelt",
+    "Invigorating",
+    "Earnest",
+    "Homespun",
+    "Liberating",
+    "Idyllic",
+    "Melancholic",
+    "Measured",
+    "Folksy",
+    "Isolated",
+    "Stubborn",
+    'cars','speed', 'adventure', 'friendship', 'championship', 'racing', 'road', 'truck', 'tire', 'wheel' #this line is added in by Amira, words picked by LLM
+    ]
+
+    ################
+
+    ################ MOD 4
+
+    #GENERATE SONGS BY LYRICS
+    prompt = f"""
+    You are given a list of related words: {related_words}.  
+    Using these words, return songs whose lyrics match their themes.  
+
+    Only return a JSON object. No extra text.  
+    Format the output strictly as follows:  
+    {{"song_title": "Song Name", "artist": "Artist Name"}},
+
+    Each song must include the correct artist.
+    Choose songs based on lyrics, not just the title.
+    """
+
+    response = chat(
+    messages=[
+        {
+            "role": "system",
+            "content": prompt
+        },
+        {
+            "role": "user",
+            "content": f"{related_words} are the related words. Please generate songs and their respective song artists."
+        }
+    ],
+    model='llama3.2:latest',
+    format=sentimentOfSongs.model_json_schema(),
+    )
+        
+    songsByLyrics = sentimentOfSongs.songs_generated_by_input.model_validate_json(response.message.content)
+
+    #GENERATE SONGS BY FEELING/SENTIMENT
+    prompt = f"""
+    You are given a list of related words: {related_words}.  
+    Using these words, return songs whose sentiment, mood, or general vibe match their themes.  
+
+    Only return a JSON object. No extra text.  
+    Format the output strictly as follows:  
+    {{"song_title": "Song Name", "artist": "Artist Name"}},
+
+    Each song must include the correct artist.
+    Do not choose just based on the song title.
+    """
+
+    response = chat(
+    messages=[
+        {
+            "role": "system",
+            "content": prompt
+        },
+        {
+            "role": "user",
+            "content": f"{related_words} are the related words. Please generate songs and their respective song artists."
+        }
+    ],
+    model='llama3.2:latest',
+    format=sentimentOfSongs.model_json_schema(),
+    )
+        
+    songsBySentiment = sentimentOfSongs.songs_generated_by_input.model_validate_json(response.message.content)
+
+
+    #GENERATE SONGS W/OUT EXTRA INSTRUCTION
+    prompt = f"""
+    You are given a list of related words: {related_words}.  
+    Using these words, return songs that are similar.  
+
+    Only return a JSON object. No extra text.  
+    Format the output strictly as follows:  
+    {{"song_title": "Song Name", "artist": "Artist Name"}},
+
+    Each song must include the correct artist.
+    """
+
+    response = chat(
+    messages=[
+        {
+            "role": "system",
+            "content": prompt
+        },
+        {
+            "role": "user",
+            "content": f"{related_words} are the related words. Please generate songs and their respective song artists."
+        }
+    ],
+    model='llama3.2:latest',
+    format=sentimentOfSongs.model_json_schema(),
+    )
+        
+    songsGenerated = sentimentOfSongs.songs_generated_by_input.model_validate_json(response.message.content)
+
+    ################
+
+    ################ MOD 5
+    #Currently empty, has to do with calculations
+    ################
+
+    
+    
+
+    #return jsonify({"message": movie_details})
+    return jsonify({
+    "message": movie_details,
+    "songs_by_lyrics": songsByLyrics,
+    "songs_by_sentiment": songsBySentiment,
+    "songs_generated": songsGenerated
+    })
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001)

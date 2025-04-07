@@ -8,7 +8,11 @@ import os
 import json
 from dotenv import load_dotenv
 import re
+import base64
 
+
+app = Flask(__name__)
+CORS(app)
 
 class Movie(BaseModel):
     movie_title: str
@@ -20,6 +24,103 @@ class Movie(BaseModel):
 
 class sentimentOfSongs(BaseModel):
     songs_generated_by_input: list[str]
+
+
+class SongsList:
+    @classmethod
+    def model_json_schema(cls):
+        return {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "song_title": {"type": "string", "description": "The title of the song"},
+                    "artist": {"type": "string", "description": "The name of the artist/band who performed the song"}
+                },
+                "required": ["song_title", "artist"]
+            },
+            "description": "A list of songs with their titles and artists"
+        }
+
+
+def get_spotify_access_token():
+    """
+    Retrieves an access token from Spotify using the Client Credentials Flow.
+    Make sure that SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET are set in your environment.
+    """
+    client_id = os.getenv("SPOTIFY_CLIENT_ID")
+    client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
+
+    if not client_id or not client_secret:
+        raise Exception("Spotify credentials not found in environment variables.")
+
+    # Create a Base64-encoded string from 'client_id:client_secret'
+    auth_str = f"{client_id}:{client_secret}"
+    b64_auth_str = base64.b64encode(auth_str.encode()).decode()
+
+    token_url = "https://accounts.spotify.com/api/token"
+    headers = {
+        "Authorization": f"Basic {b64_auth_str}",
+        "Content-type": "application/x-www-form-urlencoded"
+    }
+    data = {
+        "grant_type": "client_credentials"
+    }
+
+    response = requests.post(token_url, headers=headers, data=data)
+    if response.status_code != 200:
+        raise Exception(f"Failed to get access token: {response.text}")
+
+    token = response.json()["access_token"]
+    return token
+
+
+def search_song_by_title(song_recommendation, token):
+    """
+    Searches Spotify for a track matching the song recommendation.
+    Returns a dictionary with song title, artist(s), and a Spotify link.
+    """
+    search_url = "https://api.spotify.com/v1/search"
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+
+    params = {
+        "q": song_recommendation,
+        "type": "track",
+        "limit": 1
+    }
+
+    response = requests.get(search_url, headers=headers, params=params)
+
+    if response.status_code != 200:
+        print("Error searching Spotify", response.text)
+        return None
+
+    data = response.json()
+    tracks = data.get("tracks", {}).get("items", [])
+    if not tracks:
+        print("No tracks found for the recommendation:", song_recommendation)
+        return None
+
+    # Take the first track as the best match
+    track = tracks[0]
+    song_title = track.get("name")
+    
+    # Get a comma-separated list of artist names
+    artists = [artist.get("name") for artist in track.get("artists", [])]
+    spotify_link = track.get("external_urls", {}).get("spotify")
+
+    # Get the album cover art (has 3 sizes: large, medium, small)
+    album_images = track.get("album", {}).get("images", [])
+    album_art_url = album_images[0]['url'] if album_images else None  # Highest resolution
+
+    return {
+        "song_title": song_title,
+        "artist": ", ".join(artists),
+        "spotify_link": spotify_link,
+        "album_art": album_art_url
+    }
 
 
 def search_movies_by_title(title, TMDB_BASE_URL, TMDB_API_KEY, page=1):
@@ -73,8 +174,8 @@ def get_movie_details(movie_id, TMDB_BASE_URL, TMDB_API_KEY):
         print(f"Exception while getting movie details: {e}")
         return None
 
-app = Flask(__name__)
-CORS(app, origins="https://rakshakshah.github.io")  # Enable CORS for all routes
+# app = Flask(__name__)
+# CORS(app, origins="https://rakshakshah.github.io")  # Enable CORS for all routes
 
 
 def get_title_candidates(user_input, model_name="deepseek-r1:7b"):
@@ -209,7 +310,6 @@ def find_movie_using_llm(user_input, TMDB_BASE_URL, TMDB_API_KEY,model_name="dee
 @app.route('/run-python', methods=['POST'])
 def run_python():
     
-
     ################MOD 1
     data = request.get_json()  # Get JSON data from the request
     user_text = data.get('text', '')  # Extract the 'text' field
@@ -307,7 +407,7 @@ def run_python():
     You are given a list of related words: {related_words}.  
     Using these words, return songs whose lyrics match their themes.  
 
-    Only return a JSON object. No extra text.  
+    Only return a JSON object. No extra text.
     Format the output strictly as follows:  
     {{"song_title": "Song Name", "artist": "Artist Name"}},
 
@@ -327,12 +427,12 @@ def run_python():
         }
     ],
     model='llama3.2:latest',
-    format=sentimentOfSongs.model_json_schema(),
+    format=SongsList.model_json_schema(),
     )
-    songs_data = json.loads(response.message.content)
+    songsByLyrics = json.loads(response.message.content)
 
     # Access songs_generated_by_input manually
-    songsByLyrics = songs_data.get("songs_generated_by_input", [])
+    
 
     # Debugging
     print(songsByLyrics)
@@ -343,7 +443,7 @@ def run_python():
     Using these words, return songs whose sentiment, mood, or general vibe match their themes.  
 
     Only return a JSON object. No extra text.  
-    Format the output strictly as follows:  
+    Format the output strictly as a dictionary as follows: 
     {{"song_title": "Song Name", "artist": "Artist Name"}},
 
     Each song must include the correct artist.
@@ -362,13 +462,13 @@ def run_python():
         }
     ],
     model='llama3.2:latest',
-    format=sentimentOfSongs.model_json_schema(),
+    format=SongsList.model_json_schema(),
     )
         
-    songs_data = json.loads(response.message.content)
+    songsBySentiment = json.loads(response.message.content)
 
     # Access songs_generated_by_input manually
-    songsBySentiment = songs_data.get("songs_generated_by_input", [])
+    
 
     # Debugging
     print(songsBySentiment)
@@ -379,7 +479,7 @@ def run_python():
     Using these words, return songs that are similar.  
 
     Only return a JSON object. No extra text.  
-    Format the output strictly as follows:  
+    Format the output strictly as follows:
     {{"song_title": "Song Name", "artist": "Artist Name"}},
 
     Each song must include the correct artist.
@@ -397,12 +497,12 @@ def run_python():
         }
     ],
     model='llama3.2:latest',
-    format=sentimentOfSongs.model_json_schema(),
+    format=SongsList.model_json_schema(),
     )
-    songs_data = json.loads(response.message.content)
+    songsGenerated = json.loads(response.message.content)
 
     # Access songs_generated_by_input manually
-    songsGenerated = songs_data.get("songs_generated_by_input", [])
+    
 
     # Debugging
     print(songsGenerated)   
@@ -415,15 +515,30 @@ def run_python():
 
     
     
+    songs = []
+    token = get_spotify_access_token()
+    for song in songsGenerated:
+        song_details = search_song_by_title(song['song_title'], token)
+        songs.append(song_details)
+    for song in songsBySentiment:
+        song_details = search_song_by_title(song["song_title"], token)
+        songs.append(song_details)
+    for song in songsByLyrics:
+        song_details = search_song_by_title(song["song_title"], token)
+        songs.append(song_details)
+    
+
+
 
     #return jsonify({"message": movie_details})
     return jsonify({
     "message": movie_details,
     "songs_by_lyrics": songsByLyrics,
     "songs_by_sentiment": songsBySentiment,
-    "songs_generated": songsGenerated
+    "songs_generated": songsGenerated,
+    "songs" : songs
     })
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001)
+    app.run(port=5001)

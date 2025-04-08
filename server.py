@@ -345,42 +345,7 @@ def run_python():
     ################ MOD 3
     #empty for now, just using values for demo
 
-    sentiment_word_pairs = [
-    ["Uplifting", "Depressing"],
-    ["Triumphant", "Defeated"],
-    ["Thrilling", "Boring"],
-    ["Inspiring", "Discouraging"],
-    ["Comforting", "Disturbing"],
-    ["Amusing", "Somber"],
-    ["Profound", "Shallow"],
-    ["Intimate", "Distant"],
-    ["Redemptive", "Condemning"],
-    ["Serene", "Chaotic"],
-    ["Harmonious", "Discordant"],
-    ["Nostalgic", "New"],
-    ["Memorable", "Forgettable"],
-    ["Popular", "Niche"],
-    ["Spirited", "Lifeless"],
-    ["Provocative", "Innocuous"],
-    ["Jubilant", "Despondent"],
-    ["Surreal", "Realistic"],
-    ["Immerseive", "Detached"],
-    ["Fantastical", "Grounded"],
-    ["Complex", "Simple"],
-    ["Innovative", "Common"],
-    ["Raw", "Polished"],
-    ["Ambitious", "Unimaginative"],
-    ["Liberating", "Confining"],
-    ["Childish", "Mature"]
-    ]
-
-    #closer to -1 for first word, closer to 1 for second word
-    sentiment_word_pairs_values = [
-    0.8721, 0.8234, 0.7482, 0.8412, 0.9123, 0.7654, 0.6321, 0.8123, 
-    0.8567, 0.7245, 0.7934, 0.9021, 0.8945, 0.9278, 0.8932, -0.7345, 
-    0.8456, 0.7987, 0.8712, 0.8129, -0.6523, 0.7268, -0.5124, 0.7845, 
-    0.8492, -0.3127
-    ]
+    
     
     related_words = [
     "Whimsical",
@@ -400,7 +365,7 @@ def run_python():
     ]
 
     ################
-
+    print("MODEL 3 DONE")
     ################ MOD 4
 
     #GENERATE SONGS BY LYRICS

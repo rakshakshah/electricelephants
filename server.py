@@ -9,6 +9,7 @@ import json
 from dotenv import load_dotenv
 import re
 import base64
+from datetime import datetime
 
 
 app = Flask(__name__)
@@ -539,6 +540,56 @@ def run_python():
     "songs" : songs
     })
 
+SAVE_DIR = "saved_chats"
+os.makedirs(SAVE_DIR, exist_ok=True)
+
+
+@app.route('/load-chats', methods=['GET'])
+def load_chats():
+    chat_files = os.listdir("saved_chats")
+    chats = []
+
+    for chat_file in chat_files:
+        # Assuming chat files are in .json format
+        if chat_file.endswith('.json'):
+            # Get the chat name from the file (or use a default name)
+            with open(os.path.join("saved_chats", chat_file), 'r') as f:
+                chat_data = json.load(f)
+                chat_name = chat_data.get('name', 'Untitled Chat')
+                chats.append({'name': chat_name, 'filename': chat_file})
+    
+    return jsonify({'chats': chats})
+
+
+# Save a new chat
+@app.route('/save-chat', methods=['POST'])
+def save_chat():
+    data = request.get_json()
+    chat_name = data.get('name', 'Untitled Chat')
+    chat_html = data.get('html', '')
+
+    # Generate a filename for the saved chat (you can use timestamps or other methods)
+    filename = f"{chat_name.replace(' ', '_')}.json"
+
+    # Save the chat to the file system
+    chat_data = {'name': chat_name, 'html': chat_html}
+    with open(os.path.join("saved_chats", filename), 'w') as f:
+        json.dump(chat_data, f)
+
+    return jsonify({'filename': filename})
+
+@app.route('/save-rating', methods=['POST'])
+def save_rating():
+    data = request.get_json()
+    rating = data.get("rating")
+    chat = data.get("chat")
+    if not rating or not chat:
+        return "Missing data", 400
+
+    with open("ratings.txt", "a") as f:
+        f.write(f"{chat}: {rating}/5\n")
+
+    return "Rating saved", 200
 
 if __name__ == '__main__':
     app.run(port=5001)

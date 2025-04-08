@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -177,12 +176,9 @@
     <div class="toggle-btn" onclick="toggleSidebar()">
       <i class="fas fa-angle-left"></i>
     </div>
-    <h2>Ellie</h2>
-    <div class="chat-history">
-      <div onclick="alert('Love Songs history clicked!')">🎵 Love Songs</div>
-      <div onclick="alert('Sad Vibes history clicked!')">🌧 Sad Vibes</div>
-      <div onclick="alert('Party Mode history clicked!')">🎉 Party Mode</div>
-      <div onclick="alert('Late Night Thoughts history clicked!')">🌙 Late Night Thoughts</div>
+    <h2 id="chatName">Ellie</h2> <!-- Chat name will be inserted here -->
+    <div class="chat-history" id="chatHistory">
+      <!-- Saved chat names will appear here -->
     </div>
   </div>
 
@@ -192,11 +188,97 @@
     </div>
     <div class="input-area">
       <input type="text" id="userInput" placeholder="Type a message...">
-      <button onclick="runPython()">Send</button>
+      <button onclick="runPython()">Send</button>  
+      <button onclick="saveChat()">Save Chat</button>
     </div>
   </div>
 
   <script>
+
+    function saveChat() {
+      const chatHTML = document.getElementById("messages").innerHTML;
+  
+      // Get the first user message from the chat
+      const firstUserMessage = document.querySelector(".message.user");
+  
+      // Use the text of the first user message as the chat name
+      let chatName = firstUserMessage ? firstUserMessage.innerText.trim() : "Untitled Chat";
+  
+      // Send the chat HTML and name to the server
+      fetch("http://localhost:5001/save-chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ name: chatName, html: chatHTML })
+      })
+      .then(res => res.json())
+      .then(data => {
+        // Confirm the save and update the sidebar
+        alert("Chat saved as: " + data.filename);
+        updateSidebar(data.filename, chatName);
+      })
+      .catch(err => {
+        console.error("Failed to save chat:", err);
+      });
+    }
+
+    // Update the sidebar with the new saved chat name
+    function updateSidebar(filename, chatName) {
+      const chatHistory = document.getElementById("chatHistory");
+  
+      const chatDiv = document.createElement("div");
+      chatDiv.innerText = chatName;
+      chatDiv.onclick = () => loadChat(filename); // Load the chat on click
+      chatHistory.appendChild(chatDiv);
+    }
+
+    // Load the saved chat into the main chat area
+    function loadChat(filename) {
+      fetch(`http://localhost:5001/load-chat/${filename}`)
+        .then(res => res.json())
+        .then(data => {
+          const messages = document.getElementById("messages");
+          messages.innerHTML = data.html; // Load the saved chat HTML into the message area
+        })
+        .catch(err => {
+          console.error("Failed to load chat:", err);
+        });
+    }
+
+    // Load saved chats on page load
+    window.addEventListener("DOMContentLoaded", () => {
+      loadChatHistory();
+    });
+
+    // Fetch and display all saved chat names in the sidebar
+    function loadChatHistory() {
+      fetch("http://localhost:5001/load-chats") // Fetch all saved chats
+        .then(res => res.json())
+        .then(data => {
+          const chatHistory = document.getElementById("chatHistory");
+          chatHistory.innerHTML = ""; // Clear current sidebar entries
+
+          // Loop through the saved chats and add them to the sidebar
+          data.chats.forEach(chat => {
+            const chatDiv = document.createElement("div");
+            chatDiv.innerText = chat.name; // Set chat name
+            chatDiv.onclick = () => loadChat(chat.filename); // Load the chat on click
+            chatHistory.appendChild(chatDiv);
+          });
+        })
+        .catch(err => {
+          console.error("Failed to load chat history:", err);
+        });
+    }
+
+    document.getElementById("userInput").addEventListener("keydown", function (event) {
+      if (event.key === "Enter") {
+          event.preventDefault();
+          runPython();
+        }
+    });
+
     function toggleSidebar() {
       const sidebar = document.getElementById('sidebar');
       const icon = sidebar.querySelector('.toggle-btn i');
@@ -247,16 +329,81 @@
           return section;
         }
 
+        // Rating stars with hover + click behavior
+        const ratingDiv = document.createElement("div");
+        ratingDiv.style.marginTop = "10px";
+        ratingDiv.style.userSelect = "none";
+        ratingDiv.style.fontSize = "20px";
+
+        let currentTab = document.getElementById("chatName").innerText || "Unnamed Chat";
+        let selectedRating = 0;
+        const stars = [];
+
+        for (let i = 1; i <= 5; i++) {
+          const star = document.createElement("span");
+          star.innerHTML = "&#9734;"; // hollow star
+          star.style.cursor = "pointer";
+          star.style.marginRight = "5px";
+
+          // Hover effect
+          star.addEventListener("mouseover", () => {
+            stars.forEach((s, index) => {
+              s.innerHTML = index < i ? "&#9733;" : "&#9734;";
+            });
+          });
+
+          // Restore to selected rating on mouse out
+          star.addEventListener("mouseout", () => {
+            stars.forEach((s, index) => {
+              s.innerHTML = index < selectedRating ? "&#9733;" : "&#9734;";
+            });
+          });
+
+          // Click to select
+          star.addEventListener("click", () => {
+            selectedRating = i;
+            stars.forEach((s, index) => {
+              s.innerHTML = index < selectedRating ? "&#9733;" : "&#9734;";
+            });
+
+            // Send to backend
+            fetch("http://localhost:5001/save-rating", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ rating: selectedRating, chat: currentTab })
+            })
+            .then(res => res.text())
+            .then(res => console.log("Rating saved:", res))
+            .catch(err => console.error("Rating error:", err));
+          });
+
+          stars.push(star);
+          ratingDiv.appendChild(star);
+        }
+
         let outputHTML = "";
-        // outputHTML += displayCategory("Movie Details", data.message) || "";
         outputHTML += displayCategory("Songs by Lyrics", data.songs_by_lyrics) || "";
         outputHTML += displayCategory("Songs by Sentiment", data.songs_by_sentiment) || "";
         outputHTML += displayCategory("Generated Songs", data.songs_generated) || "";
         outputHTML += displayCategory("Songs", data.songs) || "";
 
         botBubble.innerHTML += outputHTML;
+        // added star rating
+        botBubble.appendChild(ratingDiv);
         messages.appendChild(botBubble);
         messages.scrollTop = messages.scrollHeight;
+
+        // 🎨 Change color here after response is rendered
+        const colours = [
+          "LightCoral",
+          "SandyBrown",
+          "PapayaWhip",
+          "DarkSeaGreen",
+          "AliceBlue",
+          "Lavender"
+        ];
+        const randomColor = colours[Math.floor(Math.random() * colours.length)];
+        document.querySelector(".main").style.backgroundColor = randomColor;
       })
       .catch(error => {
         console.error("Error:", error);
@@ -267,6 +414,7 @@
         messages.scrollTop = messages.scrollHeight;
       });
     }
+
   </script>
 </body>
 

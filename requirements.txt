@@ -6,3 +6,6 @@ pydantic
 requests
 dotenv
 datetime
+langchain
+langchain_community
+pandas

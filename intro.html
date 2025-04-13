@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Welcome to Ellie</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="images/ellie_icon.png" type="image/gif" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Lucida Console', 'Courier New', monospace;
+      background-color: #fff0f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+    }
+
+    .container {
+      animation: fadeIn 1s ease;
+    }
+
+    .typing-text {
+      display: inline-block;
+      border-right: 2px solid #ac72ac;
+      white-space: nowrap;
+      overflow: hidden;
+      font-size: 2rem;
+      color: #ac72ac;
+      width: 0;
+      animation:
+        typingIntro 1.5s steps(14) forwards,
+        blink 0.75s step-end 2s,
+        cursorFadeOut 0.1s ease 2.25s forwards;
+    }
+
+    .typing-text.ellie {
+      font-size: 3rem;
+      border-right: 2px solid #ac72ac;
+      white-space: nowrap;
+      overflow: hidden;
+      width: 0;
+      animation:
+        typingEllie 1s steps(5) forwards,
+        blink 0.75s step-end 1.8s 2.4s,
+        cursorFadeOut 0.1s ease 4.2s forwards;
+      animation-delay: 1.6s; /* start after "Introducing..." finishes */
+    }
+
+    @keyframes typingIntro {
+      from { width: 0; }
+      to { width: 14ch; } /* "Introducing..." = 14 characters */
+    }
+
+    @keyframes typingEllie {
+      from { width: 0; }
+      to { width: 5ch; } /* exactly 5 letters */
+    }
+
+    @keyframes blink {
+      50% { border-color: transparent; }
+    }
+
+    @keyframes cursorFadeOut {
+      to { border-right: none; }
+    }
+
+    .continue-btn {
+      font-family: 'Lucida Console', 'Courier New', monospace;
+      font-size: 1rem;
+      background-color: #ff69b4;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      margin-top: 40px;
+      opacity: 0;
+      animation: fadeIn 0.5s ease forwards;
+      animation-delay: 4.5s; /* after both animations are done */
+    }
+
+    .learn-more-btn {
+      font-family: 'Lucida Console', 'Courier New', monospace;
+      font-size: 1rem;
+      background-color: #ff9cce;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      margin-top: 40px;
+      opacity: 0;
+      animation: fadeIn 0.5s ease forwards;
+      animation-delay: 4.5s; /* after both animations are done */
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="typing-text">Introducing...</div><br>
+    <div class="typing-text ellie">Ellie</div><br>
+    <button class="continue-btn" onclick="location.href='index.html'">Continue</button>
+    <button class="learn-more-btn" onclick="location.href='index.html'">Learn More About the Process</button>
+  </div>
+</body>
+</html>

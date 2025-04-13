@@ -804,6 +804,7 @@ def load_chats():
         if chat_file.endswith('.json'):
             # Get the chat name from the file (or use a default name)
             with open(os.path.join("saved_chats", chat_file), 'r') as f:
+                print(f)
                 chat_data = json.load(f)
                 chat_name = chat_data.get('name', 'Untitled Chat')
                 chats.append({'name': chat_name, 'filename': chat_file})
@@ -840,6 +841,30 @@ def save_rating():
         f.write(f"{chat}: {rating}/5\n")
 
     return "Rating saved", 200
+
+
+from flask import abort
+
+@app.route('/load-chat/<filename>', methods=['GET'])
+def load_chat(filename):
+    try:
+        # Optional: sanitize filename if needed to prevent path traversal attacks
+        if not filename.endswith('.json'):
+            abort(400, description="Invalid file type")
+
+        file_path = os.path.join("saved_chats", filename)
+
+        if not os.path.exists(file_path):
+            abort(404, description="File not found")
+
+        with open(file_path, 'r') as f:
+            chat_data = json.load(f)
+            return jsonify(chat_data)
+
+    except Exception as e:
+        # Optional: log the error
+        return jsonify({'error': str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(port=5001)

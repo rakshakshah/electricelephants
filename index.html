@@ -1,228 +1,331 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-  <!-- Basic -->
-  <meta charset="utf-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <!-- Mobile Metas -->
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-  <!-- Site Metas -->
-  <link rel="icon" href="images/ellie_icon.png" type="image/gif" />
-  <meta name="keywords" content="" />
-  <meta name="description" content="" />
-  <meta name="author" content="" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ellie Chat</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Lucida Console', 'Courier New', monospace;
+      display: flex;
+      height: 100vh;
+      background-color: #fff0f5;
+    }
 
-  <title></title>
+    .sidebar {
+      width: 280px;
+      background-color: #c8a2c8;
+      color: white;
+      padding: 20px;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      transition: width 0.3s ease;
+      position: relative;
+    }
 
+    .sidebar.collapsed {
+      width: 70px;
+      align-items: center;
+      padding: 10px;
+    }
 
-  <!-- bootstrap core css -->
-  <link rel="stylesheet" type="text/css" href="css/bootstrap.css" />
+    .sidebar h2 {
+      font-size: 1.8rem;
+      margin-bottom: 30px;
+      transition: opacity 0.3s;
+    }
 
-  <!-- fonts style -->
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    .sidebar.collapsed h2 {
+      font-size: 1.4rem;
+      opacity: 1;
+    }
 
-  <!-- font awesome style -->
-  <link href="css/font-awesome.min.css" rel="stylesheet" />
+    .sidebar .chat-history {
+      flex-grow: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
 
-  <!-- Custom styles for this template -->
-  <link href="css/style.css" rel="stylesheet" />
-  <!-- responsive style -->
-  <link href="css/responsive.css" rel="stylesheet" />
+    .sidebar .chat-history div {
+      padding: 10px;
+      border-radius: 10px;
+      background-color: rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
 
-  
+    .sidebar .chat-history div:hover {
+      background-color: rgba(255, 255, 255, 0.3);
+    }
 
+    .sidebar.collapsed .chat-history {
+      display: none;
+    }
+
+    .toggle-btn {
+      position: absolute;
+      top: 10px;
+      right: -15px;
+      background: #ff69b4;
+      color: white;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.2);
+    }
+
+    .main {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      overflow: hidden;
+    }
+
+    .messages {
+      flex-grow: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-right: 10px;
+    }
+
+    .message {
+      max-width: 70%;
+      padding: 12px 18px;
+      border-radius: 20px;
+      line-height: 1.4;
+    }
+
+    .message.user {
+      align-self: flex-end;
+      background-color: #ffc0cb;
+      color: black;
+    }
+
+    .message.bot {
+      align-self: flex-start;
+      background-color: #f0f0f0;
+    }
+
+    .input-area {
+      display: flex;
+      gap: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #ddd;
+      font-family: 'Lucida Console', 'Courier New', monospace;
+    }
+
+    .input-area input {
+      flex-grow: 1;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 25px;
+      font-size: 16px;
+      background-color: #f7f7f7;
+      font-family: 'Lucida Console', 'Courier New', monospace;
+    }
+
+    .input-area button {
+      background-color: #ff69b4;
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 16px;
+      font-family: 'Lucida Console', 'Courier New', monospace;
+    }
+
+    .song-section {
+      background: #fff0f5;
+      border: 1px solid #ffc0cb;
+      border-radius: 20px;
+      padding: 15px;
+      margin: 10px 0;
+      box-shadow: 0 5px 15px rgba(255, 182, 193, 0.3);
+    }
+
+    .song-section h4 {
+      color: #d63384;
+      margin-bottom: 10px;
+    }
+
+    .song-section ul {
+      padding-left: 20px;
+    }
+    .active-tab {
+    background-color: rgba(255, 255, 255, 0.4) !important;
+    font-weight: bold;
+    }
+  </style>
 </head>
 
 <body>
-
-  <div class="hero_area">
-    <!-- header section strats -->
-    <header class="header_section">
-      <div class="container-fluid">
-        <nav class="navbar navbar-expand-lg custom_nav-container ">
-          <a class="navbar-brand" href="index.html">
-            <span style="font-size: 2rem; font-weight: bold;">
-              <img src="images/ellie_logo.png" alt="" style="width: 150px; height: auto;">
-              ELLIE
-            </span>
-            <span style="font-size: 1.2rem; font-family: 'Trattatello', fantasy; font-style: italic; margin-left: 8px;">
-              by electric elephants
-            </span>
-          </a>
-
-          <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class=""> </span>
-          </button>
-
-        </nav>
-      </div>
-    </header>
-    <!-- end header section -->
-  
-  
-    <div style="width: 90%; margin: 20px auto; padding: 20px; background: #fefafe; border-radius: 20px; box-shadow: 0px 0px 20px rgba(255, 182, 193, 0.5); overflow: hidden; position: relative;">
-
-
-    <!-- BACKEND!!! DO NOT CHANGE -->
-    <h3 style="text-align: center;">~ Welcome Back Shreya! ~</h3>
-<!-- Chat-Like Input Section -->
-<div style="width: 90%; margin: 20px auto; padding: 20px; background: #FEFAFE; border-radius: 20px; text-align: center;">
-  <h2 style="font-size: 1.8rem; font-weight: bold; margin-bottom: 15px;">Chat with Ellie</h2>
-  <div style="display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px; border-radius: 30px; background: #fff; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); max-width: 600px; margin: auto;">
-      <!-- Chat Input Field -->
-      <input type="text" id="userInput" placeholder="Type a message..."
-          style="flex: 1; padding: 12px 15px; border: none; border-radius: 25px; outline: none; font-size: 16px; background: #F7F7F7; box-shadow: inset 0px 2px 4px rgba(0, 0, 0, 0.1);">
-      <!-- Submit Button -->
-      <button onclick="runPython()" style="padding: 12px 18px; border-radius: 50px; border: none; background: #FF69B4; color: white; font-size: 16px; cursor: pointer; box-shadow: 0px 4px 10px rgba(255, 105, 180, 0.4); transition: 0.3s;">
-        ⌯⌲
-      </button>
+  <div class="sidebar" id="sidebar">
+    <div class="toggle-btn" onclick="toggleSidebar()">
+      <i class="fas fa-angle-left"></i>
+    </div>
+    <h2>Ellie</h2>
+    <div class="chat-history" id="chatTabs">
+      <div data-tab="Cars">🎵 Cars</div>
+      <div data-tab="Sad Vibes">🌧 Sad Vibes</div>
+      <div data-tab="Party Mode">🎉 Party Mode</div>
+      <div data-tab="Late Night Thoughts">🌙 Late Night Thoughts</div>
+    </div>
   </div>
-  <p id="output" style="margin-top: 10px; font-size: 14px; color: #777;">Waiting for response...</p>
-</div>
-<div id="songsOutput"></div> <!-- Songs will be displayed here -->
 
-<script>
-  function runPython() {
-    const inputText = document.getElementById("userInput").value;
+  <div class="main">
+    <div class="messages" id="messages">
+      <!-- Messages will appear here -->
+    </div>
+    <div class="input-area">
+      <input type="text" id="userInput" placeholder="Type a message...">
+      <button onclick="runPython()">Send</button>
+    </div>
+  </div>
 
-    fetch('http://localhost:5001/run-python', {  // Use your Render URL if needed
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ text: inputText })
-    })
-    .then(response => response.json())
-    .then(data => {
-      // Display movie details (message)
-      document.getElementById("output").innerText = data.message || "No movie details available.";
-
-      // Clear previous results
-      const outputDiv = document.getElementById("songsOutput");
-      outputDiv.innerHTML = "";
-
-      // Function to display each category of songs
-      function displayCategory(title, items) {
-        if (!items || items.length === 0) return; // Skip empty categories
-
-        let section = `<h3>${title}</h3><ul>`;
-        items.forEach(item => {
-          // If it's an object with song_title, display it properly
-          if (typeof item === 'object' && item.song_title) {
-            section += `<li><strong>${item.song_title}</strong> ${item.artist ? "- " + item.artist : ""}</li>`;
-          }
-          // If it's a plain string or other data type, just display it
-          else {
-            section += `<li>${JSON.stringify(item)}</li>`;
-          }
-        });
-        section += `</ul>`;
-        outputDiv.innerHTML += section;
-      }
-
-      // Display all categories
-      displayCategory("Songs by Lyrics", data.songs_by_lyrics);
-      displayCategory("Songs by Sentiment", data.songs_by_sentiment);
-      displayCategory("Generated Songs", data.songs_generated);
-    })
-    .catch(error => {
-      console.error("Error:", error);
-      document.getElementById("output").innerText = "Error fetching response.";
+  <script>
+    const chatStorageKey = "ellie_chat_history";
+    let currentTab = "Cars";
+  
+    document.addEventListener("DOMContentLoaded", () => {
+      setupTabEvents();
+      loadChat(currentTab);
+      highlightActiveTab(currentTab);
     });
-  }
-</script>
-
-
-    
-    <!-- BACKEND!!! DO NOT CHANGE -->
-    </div>
-
-  </div>
-
-  <!-- Movie Carousel Section -->
-
-  <div style="width: 90%; margin: 20px auto; padding: 20px; background: #fefafe; border-radius: 20px; box-shadow: 0px 0px 20px rgba(255, 182, 193, 0.5); overflow: hidden; position: relative;">
-    <h2 style="text-align: center; font-size: 2rem; font-weight: bold;">BASED ON YOUR SONG PREFERENCES... WE THINK YOU'D LIKE... </h2>
-
-    <div id="movie-scroll" style="display: flex; overflow-x: auto; gap: 10px; padding: 15px; scroll-snap-type: x mandatory; white-space: nowrap; scrollbar-width: none; -ms-overflow-style: none;">
-        
-        <div style="min-width: 120px; border-radius: 12px; overflow: hidden; background: #fff; box-shadow: 0px 0px 10px rgba(200, 162, 200, 0.6); scroll-snap-align: start;">
-            <img src="images/her_movie.jpg" style="width: 200px; height: auto; border-radius: 12px; display: block;">
-        </div>
-        <div style="min-width: 120px; border-radius: 12px; overflow: hidden; background: #fff; box-shadow: 0px 0px 10px rgba(200, 162, 200, 0.6);">
-          <img src="images/passengers_movie.png" style="width: 200px; height: auto; border-radius: 12px; display: block;">
-        </div>
-        <div style="min-width: 120px; border-radius: 12px; overflow: hidden; background: #fff; box-shadow: 0px 0px 10px rgba(200, 162, 200, 0.6);">
-          <img src="images/titanic_movie.png" style="width: 200px; height: auto; border-radius: 12px; display: block;">
-        </div>
-        <div style="min-width: 120px; border-radius: 12px; overflow: hidden; background: #fff; box-shadow: 0px 0px 10px rgba(200, 162, 200, 0.6);">
-          <img src="images/cinderella_movie.png" style="width: 200px; height: auto; border-radius: 12px; display: block;">
-        </div>
-        <div style="min-width: 120px; border-radius: 12px; overflow: hidden; background: #fff; box-shadow: 0px 0px 10px rgba(200, 162, 200, 0.6);">
-          <img src="images/wicked_movie.png" style="width: 200px; height: auto; border-radius: 12px; display: block;">
-        </div>
-        </div>
-    </div>
-
-    <style>
-      @keyframes slide {
-        0% { transform: translateX(0); }
-        25% { transform: translateX(-175px); }
-        50% { transform: translateX(-350px); }
-        75% { transform: translateX(-525px); }
-        100% { transform: translateX(0); } 
-      }
-    </style>
-
-  <!-- End Movie Carousel Section -->
-/root/eecs449/electricelephants/images/fevicon/ellie_logo.png
-  <!-- info section -->
-  <section class="info_section layout_padding2" style="background-color: #C8A2C8;">
-    <div class="container">
-      <div class="info_logo">
-        <h2>
-          <img src="images/ellie_icon.png" alt="" style="width: 150px; height: auto;">
-          <img src="images/ellie_icon.png" alt="" style="width: 150px; height: auto;">
-          <img src="images/ellie_icon.png" alt="" style="width: 150px; height: auto;">
-          <img src="images/ellie_icon.png" alt="" style="width: 150px; height: auto;">
-          <img src="images/ellie_icon.png" alt="" style="width: 150px; height: auto;">        </h2>
-      </div>
-      <div style="text-align: center;">
-        <p>by Electric Elephants</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- end info_section -->
-
-  <!-- add carousel of different movies here -->
-
-  <!-- footer section -->
-  <section class="footer_section">
-    <div class="container">
-      <p>
-        &copy; <span id="displayYear"></span> All Rights Reserved By
-        <a href="https://html.design/">Free Html Templates</a>
-      </p>
-    </div>
-  </section>
-  <!-- footer section -->
-
-  <!-- jQery -->
-  <script type="text/javascript" src="js/jquery-3.4.1.min.js"></script>
-  <!-- popper js -->
-  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous">
+  
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const icon = sidebar.querySelector('.toggle-btn i');
+      sidebar.classList.toggle('collapsed');
+      icon.classList.toggle('fa-angle-left');
+      icon.classList.toggle('fa-angle-right');
+    }
+  
+    function setupTabEvents() {
+      const tabs = document.querySelectorAll("#chatTabs div");
+      tabs.forEach(tab => {
+        tab.addEventListener("click", () => {
+          currentTab = tab.getAttribute("data-tab");
+          loadChat(currentTab);
+          highlightActiveTab(currentTab);
+        });
+      });
+    }
+  
+    function highlightActiveTab(tabName) {
+      const tabs = document.querySelectorAll("#chatTabs div");
+      tabs.forEach(tab => {
+        tab.classList.toggle("active-tab", tab.getAttribute("data-tab") === tabName);
+      });
+    }
+  
+    function saveToHistory(tab, role, message) {
+      const history = JSON.parse(localStorage.getItem(chatStorageKey)) || {};
+      if (!history[tab]) history[tab] = [];
+      history[tab].push(`${role}: ${message}`);
+      localStorage.setItem(chatStorageKey, JSON.stringify(history));
+    }
+  
+    function loadChat(tab) {
+      const messages = document.getElementById("messages");
+      messages.innerHTML = "";
+      const history = JSON.parse(localStorage.getItem(chatStorageKey)) || {};
+      const entries = history[tab] || [];
+  
+      entries.forEach(entry => {
+        const isUser = entry.startsWith("User:");
+        const bubble = document.createElement("div");
+        bubble.className = "message " + (isUser ? "user" : "bot");
+        bubble.innerText = entry.replace(/^User: |^Bot: /, "");
+        messages.appendChild(bubble);
+      });
+  
+      messages.scrollTop = messages.scrollHeight;
+    }
+  
+    function runPython() {
+      const input = document.getElementById("userInput");
+      const msg = input.value.trim();
+      if (!msg) return;
+  
+      const messages = document.getElementById("messages");
+  
+      const userBubble = document.createElement("div");
+      userBubble.className = "message user";
+      userBubble.innerText = msg;
+      messages.appendChild(userBubble);
+  
+      saveToHistory(currentTab, "User", msg);
+      input.value = "";
+  
+      fetch('http://localhost:5001/run-python', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ text: msg })
+      })
+        .then(response => response.json())
+        .then(data => {
+          const botBubble = document.createElement("div");
+          botBubble.className = "message bot";
+  
+          const baseReply = data.message || "No message.";
+          botBubble.innerHTML = `<div>${baseReply}</div>`;
+          saveToHistory(currentTab, "Bot", baseReply);
+  
+          function displayCategory(title, items) {
+            if (!items || items.length === 0) return "";
+  
+            let section = `<div class='song-section'><h4>${title}</h4><ul>`;
+            items.forEach(item => {
+              if (typeof item === 'object' && item.song_title) {
+                section += `<li><strong>${item.song_title}</strong> ${item.artist ? "- " + item.artist : ""}</li>`;
+              } else {
+                section += `<li>${JSON.stringify(item)}</li>`;
+              }
+            });
+            section += `</ul></div>`;
+            return section;
+          }
+  
+          let outputHTML = "";
+          outputHTML += displayCategory("Songs by Lyrics", data.songs_by_lyrics);
+          outputHTML += displayCategory("Songs by Sentiment", data.songs_by_sentiment);
+          outputHTML += displayCategory("Generated Songs", data.songs_generated);
+  
+          botBubble.innerHTML += outputHTML;
+          messages.appendChild(botBubble);
+          saveToHistory(currentTab, "Bot", outputHTML);
+          messages.scrollTop = messages.scrollHeight;
+        })
+        .catch(error => {
+          console.error("Error:", error);
+          const errorBubble = document.createElement("div");
+          errorBubble.className = "message bot";
+          errorBubble.innerText = "Error fetching response.";
+          messages.appendChild(errorBubble);
+          saveToHistory(currentTab, "Bot", "Error fetching response.");
+          messages.scrollTop = messages.scrollHeight;
+        });
+    }
   </script>
-  <!-- bootstrap js -->
-  <script type="text/javascript" src="js/bootstrap.js"></script>
-  <!-- custom js -->
-  <script type="text/javascript" src="js/custom.js"></script>
-  <!-- Google Map -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCh39n5U-4IoWpsVGUHWdqB6puEkhRLdmI&callback=myMap">
-  </script>
-  <!-- End Google Map -->
-
+  
 </body>
 
 </html>

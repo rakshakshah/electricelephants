@@ -15,6 +15,7 @@ from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationChain
 import time
 import pandas as pd
+import numpy as np
 
 
 app = Flask(__name__)
@@ -684,7 +685,6 @@ def run_python():
 
     # Access songs_generated_by_input manually
     
-
     # Debugging
     print(songsByLyrics)
 
@@ -764,19 +764,196 @@ def run_python():
     #Currently empty, has to do with calculations
     ################
 
+
+
+
+    # BEGIN CHANGES!
+    #Getting songs we want to compare
+
+    songsToCompare = songsByLyrics[:3] + songsBySentiment[:3] + songsGenerated[:3] #this could cause an issue if less than 3 songs are gen! 
+
+    #worst case change prompts?
+
+
+
+    #then we make sure they are unique, meaning we'll get a list of 1 to 9 songs
+
+    unique_songs = {}
+
+    for song in songsToCompare:
+
+        unique_songs[f"{song['song_title']} by {song['artist']}"] = song
+
     
+
+    #change type to a list of tuples!
+
+    song_tuples = [(s['song_title'], s['artist']) for s in unique_songs.values()]
+
+    print("MODEL 4 DONE")
+
+
+     #Compute the 50 vector for each song
+
+    def get_llm_response(system_prompt, user_prompt, model="llama3.2:latest"):
+
+        response = chat(
+
+            model=model,
+
+            messages=[
+
+                {"role": "system", "content": system_prompt},
+
+                {"role": "user", "content": user_prompt}
+
+            ]
+
+    )
+
+        return response['message']['content'].strip()
     
+    def song_prompt(song_title, artist):
+
+        return f"Describe the lyrics, tempo, melody, instrumentation, dynamics, production choices, and song temperament : '{song_title}' by {artist}. How does it make the listener feel?"
+
+
+
+    def emotion_score_prompt(song_desc, word):
+
+        return f"Based on the above description, how {word} is this song on a scale from 0.0001 to 0.9999? Respond with one number only."
+
+
+
+    def analyze_song(song_title, artist):
+
+        system_prompt = "You are a music sentiment analysis assistant."
+
+        user_prompt = song_prompt(song_title, artist)
+
+        description = get_llm_response(system_prompt, user_prompt)
+
+
+
+        scores = {}
+
+        for word in words:
+
+            prompt = emotion_score_prompt(description, word)
+
+            score_str = get_llm_response(description, prompt)
+
+            try:
+
+                scores[word] = float(re.findall(r"\d+\.\d+", score_str)[0])
+
+            except:
+
+                scores[word] = -1
+
+        return scores
+
+
+
+    #amira test songs, seems to be doing very well!
+
+    #song_tuples = [("Stressed Out", "Twenty One Pilots"), ("Shy Away", "Twenty One Pilots"), ("Lonely Day", "System of A Down")]
+
+
+
+    results = {}
+
+    emotion_vectors = []
+
+
+
+    for title, artist in song_tuples:
+
+        print(f"\n🎵 Analyzing: {title} by {artist}")
+
+        result_key = f"{title} - {artist}"
+
+        emotion_scores = analyze_song(title, artist)
+
+        results[result_key] = emotion_scores
+
+
+
+        emotion_vector = list(emotion_scores.values())
+
+        emotion_vectors.append(emotion_vector)
+
+
+
+    #print emotions sorted by intensity, uncomment here for debugging/insight into what it's doing
+
+    #emotion prints the name of the emotion
+
+    #score is the emotion_score
+
+    for emotion, score in sorted(emotion_scores.items(), key=lambda x: -x[1]):
+
+        print(f"{emotion:15} : {score:.4f}")
+
+    
+    #then, do the cossim or whatever measurement chosen for every song!
+
+    cossim_scores = []
+
+    for song in range(len(song_tuples)):
+
+        #a = np.array(sentiment_word_pairs_values) #movie 
+
+        b = np.array(emotion_vectors[song]) #song
+
+        print("Cos sim is: ")
+
+        #print((a @ b.T) / (np.linalg.norm(a)*np.linalg.norm(b)))
+
+        #cos_sim = (a @ b.T) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+        #cossim_scores.append((cos_sim, song_tuples[i]))
+
+
+
+    #now sort and cut
+
+    #cossim_scores.sort(key=lambda x: x[0], reverse=True)
+
+    #top_n = 5
+
+    #top_matches = cossim_scores[:top_n]
+
+
+
+    #final_songs = [
+
+    #    {"song_title": title, "artist": artist}
+
+    #    for _, (title, artist) in top_matches
+
+    #]
+
+    final_songs = []
+
+    print("MODEL 5 DONE")
+
+    ################
+
+
+    
+    # END CHANGES
     songs = []
     token = get_spotify_access_token()
-    for song in songsGenerated:
+    for song in final_songs:
         song_details = search_song_by_title(song['song_title'], token)
         songs.append(song_details)
-    for song in songsBySentiment:
-        song_details = search_song_by_title(song["song_title"], token)
-        songs.append(song_details)
-    for song in songsByLyrics:
-        song_details = search_song_by_title(song["song_title"], token)
-        songs.append(song_details)
+    # for song in songsBySentiment:
+    #     song_details = search_song_by_title(song["song_title"], token)
+    #     songs.append(song_details)
+    # for song in songsByLyrics:
+    #     song_details = search_song_by_title(song["song_title"], token)
+    #     songs.append(song_details)
     
 
 
@@ -865,6 +1042,14 @@ def load_chat(filename):
         # Optional: log the error
         return jsonify({'error': str(e)}), 500
 
+from flask import send_file
+@app.route('/')
+def serve_intro():
+    return send_file('intro.html')
+
+@app.route('/chat')
+def serve_chat(methods=['GET']):
+    return send_file('index.html')
 
 if __name__ == '__main__':
     app.run(port=5001)

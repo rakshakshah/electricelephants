@@ -16,6 +16,7 @@ from langchain.chains import ConversationChain
 import time
 import pandas as pd
 import numpy as np
+import random
 
 
 app = Flask(__name__)
@@ -141,8 +142,6 @@ def search_song_by_title(song_recommendation, token):
     }
 
 
-
-
 def search_movies_by_title(title, TMDB_BASE_URL, TMDB_API_KEY, page=1):
     """
     Searches TMDB for movies matching the given title.
@@ -194,8 +193,6 @@ def get_movie_details(movie_id, TMDB_BASE_URL, TMDB_API_KEY):
         print(f"Exception while getting movie details: {e}")
         return None
 
-# app = Flask(__name__)
-# CORS(app, origins="https://rakshakshah.github.io")  # Enable CORS for all routes
 
 
 def get_title_candidates(user_input, model_name="deepseek-r1:7b"):
@@ -349,7 +346,7 @@ def run_python():
         )
 
     movie_instance = Movie.model_validate_json(response.message.content)
-    print(movie_instance.movie_title)
+    print(f"Model 1 thinks the movie is {movie_instance.movie_title}")
     ################
 
     ################ MOD 2
@@ -358,14 +355,10 @@ def run_python():
     TMDB_API_KEY = os.getenv("TMDB_API_KEY")
     TMDB_BASE_URL = "https://api.themoviedb.org/3"
     movie_details = find_movie_using_llm(movie_instance.movie_title, TMDB_BASE_URL, TMDB_API_KEY,model_name="deepseek-r1:7b",)
-
+    print(f"Model 2 thinks the movie is {movie_details["title"]}")
     ################ 
 
     ################ MOD 3
-    #empty for now, just using values for demo
-
-    
-    
     words = ["Optimistic",
          "Euphoric",
          "Liberating",
@@ -560,12 +553,12 @@ def run_python():
         conversation_chain = None
         
         ### PASS THE MOVIE STRING HERE ###
-        global movie
-        title = "The Matrix"
-        director = ["Lana Wachowski", "Lily Wachowski"]
-        year = "1999"
-        movie = title + " (" + year + ")" + " directed by " + director[0]
-        print(movie)
+        #global movie
+        #title = "The Matrix"
+        #director = ["Lana Wachowski", "Lily Wachowski"]
+        #year = "1999"
+        #movie = title + " (" + year + ")" + " directed by " + director[0]
+        #print(movie)
         
         global scoretimes
         scoretimes = []
@@ -647,14 +640,46 @@ def run_python():
 
     ## returns words
     related_words = [str(word) for word in ranked_words.index[0:10]]
+    #print(f"the related words for the movie are: {related_words}")
+    #print(f"The movie 50 vector is... {score_list} or {movieanalysis}")
+    
+    averaged_scores = []
+    score_list = np.array(score_list, dtype=float)
+    for i in range(0, len(score_list), 3):
+        group = score_list[i:i+3]
+        avg = sum(group) / len(group)
+        averaged_scores.append(avg)
 
-    # HERREE
-
-    ################
     print("MODEL 3 DONE")
+    ################
+    
     ################ MOD 4
+    #generate extra related words
+    prompt = f"""
+    You are given the title of a movie.
+    Generate a list of fewer than 10 words that are closely related to the movie's genre, themes, or 
+    niche. Do not include brand names, company names, or the name of the movie. Only respond with a JSON array of words.
+    """
+    response = chat(
+        messages=[
+            {
+            "role": "system",
+            "content": prompt
+            },
+            {
+            "role": "user",
+            "content": f"The movie is {movie}. Give me related words."
+            }
+        ],
+        model='llama3.2:latest'
+    )
 
-    #GENERATE SONGS BY LYRICS
+    extra_related_words = json.loads(response.message.content)
+    print(extra_related_words)
+    
+    related_words = related_words + extra_related_words
+
+    #GENERATE SONGS BY LYRICS/TOPIC
     prompt = f"""
     You are given a list of related words: {related_words}.  
     Using these words, return songs whose lyrics match their themes.  
@@ -675,7 +700,7 @@ def run_python():
         },
         {
             "role": "user",
-            "content": f"{related_words} are the related words. Please generate songs and their respective song artists."
+            "content": f"{extra_related_words} are the related words. Please generate songs and their respective song artists."
         }
     ],
     model='llama3.2:latest',
@@ -683,10 +708,7 @@ def run_python():
     )
     songsByLyrics = json.loads(response.message.content)
 
-    # Access songs_generated_by_input manually
-    
-    # Debugging
-    print(songsByLyrics)
+    print(f"Songs by lyrics:{songsByLyrics}")
 
     #GENERATE SONGS BY FEELING/SENTIMENT
     prompt = f"""
@@ -718,15 +740,11 @@ def run_python():
         
     songsBySentiment = json.loads(response.message.content)
 
-    # Access songs_generated_by_input manually
-    
-
-    # Debugging
-    print(songsBySentiment)
+    print(f"Songs by sentiment:{songsBySentiment}")
 
     #GENERATE SONGS W/OUT EXTRA INSTRUCTION
     prompt = f"""
-    You are given a list of related words: {related_words}.  
+    You are given a list of related words: {extra_related_words}.  
     Using these words, return songs that are similar.  
 
     Only return a JSON object. No extra text.  
@@ -752,194 +770,111 @@ def run_python():
     )
     songsGenerated = json.loads(response.message.content)
 
-    # Access songs_generated_by_input manually
-    
-
-    # Debugging
-    print(songsGenerated)   
-
+    print(f"Songs with no instruction:{songsGenerated}")
     ################
 
     ################ MOD 5
-    #Currently empty, has to do with calculations
-    ################
 
-
-
-
-    # BEGIN CHANGES!
     #Getting songs we want to compare
-
-    songsToCompare = songsByLyrics[:3] + songsBySentiment[:3] + songsGenerated[:3] #this could cause an issue if less than 3 songs are gen! 
-
-    #worst case change prompts?
-
-
-
-    #then we make sure they are unique, meaning we'll get a list of 1 to 9 songs
-
-    unique_songs = {}
-
-    for song in songsToCompare:
-
-        unique_songs[f"{song['song_title']} by {song['artist']}"] = song
-
-    
-
-    #change type to a list of tuples!
-
-    song_tuples = [(s['song_title'], s['artist']) for s in unique_songs.values()]
-
-    print("MODEL 4 DONE")
-
-
-     #Compute the 50 vector for each song
-
-    def get_llm_response(system_prompt, user_prompt, model="llama3.2:latest"):
-
-        response = chat(
-
-            model=model,
-
-            messages=[
-
-                {"role": "system", "content": system_prompt},
-
-                {"role": "user", "content": user_prompt}
-
-            ]
-
+    songsToCompare = (
+    random.sample(songsByLyrics, min(3, len(songsByLyrics))) +
+    random.sample(songsBySentiment, min(3, len(songsBySentiment))) +
+    random.sample(songsGenerated, min(3, len(songsGenerated)))
     )
 
+    #then we make sure they are unique, meaning we'll get a list of 1 to 9 songs
+    unique_songs = {}
+    for song in songsToCompare:
+        unique_songs[f"{song['song_title']} by {song['artist']}"] = song
+
+
+    #change type to a list of tuples!
+    song_tuples = [(s['song_title'], s['artist']) for s in unique_songs.values()]
+    
+
+    #Compute the vector for each song
+    def get_llm_response(system_prompt, user_prompt, model="llama3.2:latest"):
+        response = chat(
+            model=model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ]
+    )
         return response['message']['content'].strip()
     
     def song_prompt(song_title, artist):
-
-        return f"Describe the lyrics, tempo, melody, instrumentation, dynamics, production choices, and song temperament : '{song_title}' by {artist}. How does it make the listener feel?"
-
-
+        return f"Describe the lyrics, tempo, melody, instrumentation, dynamics, production choices, and song temperament : '{song_title}' by {artist}. How does it make the listener feel? Limit response to 20 words."
 
     def emotion_score_prompt(song_desc, word):
-
         return f"Based on the above description, how {word} is this song on a scale from 0.0001 to 0.9999? Respond with one number only."
 
 
-
     def analyze_song(song_title, artist):
-
         system_prompt = "You are a music sentiment analysis assistant."
-
         user_prompt = song_prompt(song_title, artist)
-
         description = get_llm_response(system_prompt, user_prompt)
 
-
-
         scores = {}
-
         for word in words:
-
             prompt = emotion_score_prompt(description, word)
-
             score_str = get_llm_response(description, prompt)
-
             try:
-
                 scores[word] = float(re.findall(r"\d+\.\d+", score_str)[0])
-
             except:
-
                 scores[word] = -1
-
         return scores
 
 
-
-    #amira test songs, seems to be doing very well!
-
-    #song_tuples = [("Stressed Out", "Twenty One Pilots"), ("Shy Away", "Twenty One Pilots"), ("Lonely Day", "System of A Down")]
-
-
-
     results = {}
-
     emotion_vectors = []
 
 
-
     for title, artist in song_tuples:
-
         print(f"\n🎵 Analyzing: {title} by {artist}")
-
         result_key = f"{title} - {artist}"
-
         emotion_scores = analyze_song(title, artist)
-
         results[result_key] = emotion_scores
-
-
-
         emotion_vector = list(emotion_scores.values())
-
         emotion_vectors.append(emotion_vector)
 
-
-
+ 
     #print emotions sorted by intensity, uncomment here for debugging/insight into what it's doing
-
     #emotion prints the name of the emotion
-
     #score is the emotion_score
-
     for emotion, score in sorted(emotion_scores.items(), key=lambda x: -x[1]):
-
         print(f"{emotion:15} : {score:.4f}")
 
-    
     #then, do the cossim or whatever measurement chosen for every song!
-
+    #here is cossim
     cossim_scores = []
-
+    
+    
     for song in range(len(song_tuples)):
+        a = np.array(averaged_scores, dtype=float) #movie 
+        b = np.array(emotion_vectors[song], dtype=float) #song
 
-        #a = np.array(sentiment_word_pairs_values) #movie 
+        #print(a.shape)
+        #print(b.shape)
 
-        b = np.array(emotion_vectors[song]) #song
-
-        print("Cos sim is: ")
-
+        #print("Cos sim is: ")
         #print((a @ b.T) / (np.linalg.norm(a)*np.linalg.norm(b)))
+        cos_sim = (a @ b.T) / (np.linalg.norm(a) * np.linalg.norm(b))
+        cossim_scores.append((cos_sim, song_tuples[song]))
 
-        #cos_sim = (a @ b.T) / (np.linalg.norm(a) * np.linalg.norm(b))
+    #now sort
+    cossim_scores.sort(key=lambda x: x[0], reverse=True)
+    top_n = 5
+    top_matches = cossim_scores[:top_n]
 
-        #cossim_scores.append((cos_sim, song_tuples[i]))
+    final_songs = [
+        {"song_title": title, "artist": artist}
+        for _, (title, artist) in top_matches
+    ]
 
-
-
-    #now sort and cut
-
-    #cossim_scores.sort(key=lambda x: x[0], reverse=True)
-
-    #top_n = 5
-
-    #top_matches = cossim_scores[:top_n]
-
-
-
-    #final_songs = [
-
-    #    {"song_title": title, "artist": artist}
-
-    #    for _, (title, artist) in top_matches
-
-    #]
-
-    final_songs = []
-
+    print(final_songs)
     print("MODEL 5 DONE")
-
     ################
-
 
     
     # END CHANGES
@@ -955,8 +890,7 @@ def run_python():
     #     song_details = search_song_by_title(song["song_title"], token)
     #     songs.append(song_details)
     
-
-
+    print(songs)
 
     #return jsonify({"message": movie_details})
     return jsonify({
@@ -966,6 +900,8 @@ def run_python():
     "songs_generated": songsGenerated,
     "songs" : songs
     })
+
+    print("returned json?")
 
 SAVE_DIR = "saved_chats"
 os.makedirs(SAVE_DIR, exist_ok=True)

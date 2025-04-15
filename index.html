@@ -384,8 +384,8 @@
         let outputHTML = "";
         outputHTML += displayCategory("Songs by Lyrics", data.songs_by_lyrics) || "";
         outputHTML += displayCategory("Songs by Sentiment", data.songs_by_sentiment) || "";
-        outputHTML += displayCategory("Songs without Direction", data.songs_generated) || "";
-        outputHTML += displayCategory("Top 5 Songs", data.songs) || "";
+        outputHTML += displayCategory("Generated Songs", data.songs_generated) || "";
+        outputHTML += displayCategory("Songs", data.songs) || "";
 
         botBubble.innerHTML += outputHTML;
         // added star rating

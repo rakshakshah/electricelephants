@@ -775,6 +775,8 @@ def run_python():
 
     ################ MOD 5
 
+    emotion_words_for_compare = ranked_words.index[0:10].tolist()
+
     #Getting songs we want to compare
     songsToCompare = (
     random.sample(songsByLyrics, min(3, len(songsByLyrics))) +
@@ -807,7 +809,7 @@ def run_python():
         return f"Describe the lyrics, tempo, melody, instrumentation, dynamics, production choices, and song temperament : '{song_title}' by {artist}. How does it make the listener feel? Limit response to 20 words."
 
     def emotion_score_prompt(song_desc, word):
-        return f"Based on the above description, how {word} is this song on a scale from 0.0001 to 0.9999? Respond with one number only."
+        return f"Based on the above description, how {emotion_words_for_compare} is this song on a scale from 0.0001 to 0.9999? Respond with one number only."
 
 
     def analyze_song(song_title, artist):

@@ -312,7 +312,7 @@
       .then(data => {
         const botBubble = document.createElement("div");
         botBubble.className = "message bot";
-        botBubble.innerHTML = `<div>${data.message || "No message."}</div>`;
+        // botBubble.innerHTML = `<div>${data.message || "No message."}</div>`;
 
         function displayCategory(title, items) {
           if (!items || items.length === 0) return;
@@ -322,7 +322,7 @@
             if (typeof item === 'object' && item.song_title) {
               section += `<li><strong>${item.song_title}</strong> ${item.artist ? "- " + item.artist : ""}</li>`;
             } else {
-              section += `<li>${JSON.stringify(item)}</li>`;
+              section += `<li>${item}</li>`;
             }
           });
           section += `</ul></div>`;
@@ -382,10 +382,10 @@
         }
 
         let outputHTML = "";
-        outputHTML += displayCategory("Songs by Lyrics", data.songs_by_lyrics) || "";
-        outputHTML += displayCategory("Songs by Sentiment", data.songs_by_sentiment) || "";
-        outputHTML += displayCategory("Songs without Instruction", data.songs_generated) || "";
-        outputHTML += displayCategory("Compared Songs", data.songs) || "";
+        // outputHTML += displayCategory("Songs by Lyrics", data.songs_by_lyrics) || "";
+        // outputHTML += displayCategory("Songs by Sentiment", data.songs_by_sentiment) || "";
+        // outputHTML += displayCategory("Generated Songs", data.songs_generated) || "";
+        outputHTML += displayCategory("Songs", data.songs) || "";
 
         botBubble.innerHTML += outputHTML;
         // added star rating

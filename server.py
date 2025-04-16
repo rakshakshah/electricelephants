@@ -792,7 +792,7 @@ def run_python():
     #random.sample(songsBySentiment, min(3, len(songsBySentiment))) +
     #random.sample(songsGenerated, min(3, len(songsGenerated)))
     #)
-    songsToCompare = songsByLyrics + songsBySentiment + SongsGenerated
+    songsToCompare = songsByLyrics + songsBySentiment + songsGenerated
     print("All songs generated and combined.")
     print(time.time() - start)
 

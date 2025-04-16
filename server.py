@@ -650,9 +650,12 @@ def run_python():
         avg = sum(group) / len(group)
         averaged_scores.append(avg)
 
+    
+
     print("MODEL 3 DONE")
     ################
-    
+    start = time.time()
+
     ################ MOD 4
     #generate extra related words
     prompt = f"""
@@ -675,13 +678,16 @@ def run_python():
     )
 
     extra_related_words = json.loads(response.message.content)
-    print(extra_related_words)
-    
-    related_words = related_words + extra_related_words
+    #print(extra_related_words)
+    print("niche_words_generated")
+    print(time.time() - start)
+    #related_words = related_words + extra_related_words
+
+    start = time.time()
 
     #GENERATE SONGS BY LYRICS/TOPIC
     prompt = f"""
-    You are given a list of related words: {related_words}.  
+    You are given a list of related words: {extra_related_words}.  
     Using these words, return songs whose lyrics match their themes.  
 
     Only return a JSON object. No extra text.
@@ -690,6 +696,7 @@ def run_python():
 
     Each song must include the correct artist.
     Choose songs based on lyrics, not just the title.
+    Generate 5 songs.
     """
 
     response = chat(
@@ -712,7 +719,7 @@ def run_python():
 
     #GENERATE SONGS BY FEELING/SENTIMENT
     prompt = f"""
-    You are given a list of related words: {related_words}.  
+    You are given a list of related words: {extra_related_words}.  
     Using these words, return songs whose sentiment, mood, or general vibe match their themes.  
 
     Only return a JSON object. No extra text.  
@@ -721,6 +728,7 @@ def run_python():
 
     Each song must include the correct artist.
     Do not choose just based on the song title.
+    Generate 5 songs.
     """
 
     response = chat(
@@ -731,7 +739,7 @@ def run_python():
         },
         {
             "role": "user",
-            "content": f"{related_words} are the related words. Please generate songs and their respective song artists."
+            "content": f"{extra_related_words} are the related words. Please generate songs and their respective song artists."
         }
     ],
     model='llama3.2:latest',
@@ -752,6 +760,7 @@ def run_python():
     {{"song_title": "Song Name", "artist": "Artist Name"}},
 
     Each song must include the correct artist.
+    Generate 5 songs.
     """
 
     response = chat(
@@ -762,7 +771,7 @@ def run_python():
         },
         {
             "role": "user",
-            "content": f"{related_words} are the related words. Please generate songs and their respective song artists."
+            "content": f"{extra_related_words} are the related words. Please generate songs and their respective song artists."
         }
     ],
     model='llama3.2:latest',
@@ -775,14 +784,21 @@ def run_python():
 
     ################ MOD 5
 
-    emotion_words_for_compare = ranked_words.index[0:10].tolist()
+    
 
     #Getting songs we want to compare
-    songsToCompare = (
-    random.sample(songsByLyrics, min(3, len(songsByLyrics))) +
-    random.sample(songsBySentiment, min(3, len(songsBySentiment))) +
-    random.sample(songsGenerated, min(3, len(songsGenerated)))
-    )
+    #songsToCompare = (
+    #random.sample(songsByLyrics, min(3, len(songsByLyrics))) +
+    #random.sample(songsBySentiment, min(3, len(songsBySentiment))) +
+    #random.sample(songsGenerated, min(3, len(songsGenerated)))
+    #)
+    songsToCompare = songsByLyrics + songsBySentiment + SongsGenerated
+    print("All songs generated and combined.")
+    print(time.time() - start)
+
+    start = time.time()
+    emotion_words_for_compare = ranked_words.index[0:7].tolist()
+    movie_short_vector = ranked_words["scores"].tolist()[0:7]
 
     #then we make sure they are unique, meaning we'll get a list of 1 to 9 songs
     unique_songs = {}
@@ -806,7 +822,7 @@ def run_python():
         return response['message']['content'].strip()
     
     def song_prompt(song_title, artist):
-        return f"Describe the lyrics, tempo, melody, instrumentation, dynamics, production choices, and song temperament : '{song_title}' by {artist}. How does it make the listener feel? Limit response to 20 words."
+        return f"Describe the lyrics, tempo, melody, instrumentation, dynamics, production choices, and song temperament : '{song_title}' by {artist}. How does it make the listener feel? Limit response to 35 words."
 
     def emotion_score_prompt(song_desc, word):
         return f"Based on the above description, how {emotion_words_for_compare} is this song on a scale from 0.0001 to 0.9999? Respond with one number only."
@@ -818,7 +834,7 @@ def run_python():
         description = get_llm_response(system_prompt, user_prompt)
 
         scores = {}
-        for word in words:
+        for word in emotion_words_for_compare:
             prompt = emotion_score_prompt(description, word)
             score_str = get_llm_response(description, prompt)
             try:
@@ -851,9 +867,8 @@ def run_python():
     #here is cossim
     cossim_scores = []
     
-    
     for song in range(len(song_tuples)):
-        a = np.array(averaged_scores, dtype=float) #movie 
+        a = np.array(movie_short_vector, dtype=float) #movie 
         b = np.array(emotion_vectors[song], dtype=float) #song
 
         #print(a.shape)
@@ -866,13 +881,16 @@ def run_python():
 
     #now sort
     cossim_scores.sort(key=lambda x: x[0], reverse=True)
-    top_n = 5
+    top_n = 6
     top_matches = cossim_scores[:top_n]
 
     final_songs = [
         {"song_title": title, "artist": artist}
         for _, (title, artist) in top_matches
     ]
+
+    print("Vectors generated for songs and cos sim done")
+    print(time.time() - start)
 
     print(final_songs)
     print("MODEL 5 DONE")
